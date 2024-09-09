@@ -3,7 +3,6 @@
 //#include "../../../wifi.h"
 
 #define DATA D5
-#define INVERTED 0 // LM393 IR detector ouputs low when light detected
 
 //const char* ssid = STASSID;
 //const char* password = STAPSK;
@@ -13,10 +12,7 @@ bool codeStart, codePause, codeFail;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration;
 int errorCode = 0;
 
-unsigned long last_print_time = millis();
-
 void decodeLED(void);
-int readLED(void);
 void pulseLong(void);
 void pulseShort(void);
 void codeBegin(void);
@@ -29,12 +25,12 @@ IRAM_ATTR void ledChange()
 
     ledChanged = 1;
 
-    if (!ledStatus && readLED()) { // off to on
+    if (!ledStatus && digitalRead(DATA)) { // off to on
         ledStatus = 1;
         ledOnStart = millis();
         ledOffDuration = millis() - ledOffStart; // record duration LED was off
         //ledOffDuration = (ledOffDuration + 50) / 250 * 250;
-    } else if (ledStatus && !readLED()) { // on to off
+    } else if (ledStatus && !digitalRead(DATA)) { // on to off
         ledStatus = 0;
         ledOffStart = millis();
         ledOnDuration = millis() - ledOnStart;
@@ -53,14 +49,7 @@ void setup()
 
 void loop()
 {
-    // Print every 2 seconds (non-blocking)
-    if ((unsigned long)(millis() - last_print_time) > 500) {
-        last_print_time = millis();
-    }
-
     decodeLED();
-
-    unsigned long watchDog;
 }
 
 void decodeLED()
@@ -96,7 +85,7 @@ void codeBegin()
     }
     // start reading new code
     if (!codeStart) {
-        Serial.printf("\n%lu Reading code... ", ledOffDuration);
+        Serial.printf("\n↓%lu Reading code... ", ledOffDuration);
         codeStart = 1;
         codePause = 0;
         codeFail = 0;
@@ -107,7 +96,7 @@ void codeBegin()
 void nextDigit()
 {
     if (codeStart && !codePause) { // check for only 1 pause
-        Serial.printf("p%lu ", ledOffDuration);
+        Serial.printf("↓%lu ", ledOffDuration);
         codePause = 1;
     } else { // code hasn't started yet, or pause already happened
         codeFail = 1;
@@ -118,7 +107,7 @@ void nextDigit()
 void pulseLong()
 {
     if (codeStart && codePause) {
-        Serial.printf("l%lu ", ledOnDuration);
+        Serial.printf("↑%lu ", ledOnDuration);
         errorCode++;
     } else {
         codeFail = 1;
@@ -129,18 +118,10 @@ void pulseLong()
 void pulseShort()
 {
     if (codeStart && !codePause) {
-        Serial.printf("s%lu ", ledOnDuration);
+        Serial.printf("↑%lu ", ledOnDuration);
         errorCode += 10;
     } else {
         codeFail = 1;
         Serial.printf("short_err ");
     }
-}
-
-int readLED()
-{
-    if (INVERTED)
-        return digitalRead(DATA) ^ 1;
-    else
-        return digitalRead(DATA);
 }
