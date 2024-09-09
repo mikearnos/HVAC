@@ -11,12 +11,11 @@
 bool ledStatus = 0, ledChanged = 0;
 bool codeStart, codePause, codeFail;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration;
-int errorCode;
+int errorCode = 0;
 
 unsigned long last_print_time = millis();
 
 void decodeLED(void);
-void waitForLEDOff(void);
 int readLED(void);
 void pulseLong(void);
 void pulseShort(void);
@@ -44,8 +43,6 @@ IRAM_ATTR void ledChange()
 void setup()
 {
     pinMode(DATA, INPUT);
-    ledStatus = readLED();
-    errorCode = 0;
 
     Serial.begin(115200);
 
@@ -91,14 +88,15 @@ void codeBegin()
     //Serial.printf("Begin code 2500 (%lu)\n", ledOffDuration);
 
     // print last completed code
-    if (codeStart && codePause && errorCode && !codeFail) { // code requires a start and a pause
-        Serial.printf("\tCode: %d", errorCode);
+    if (codeStart) {
+        if (codePause && errorCode && !codeFail) // code requires a start and a pause
+            Serial.printf("\tCode: %d", errorCode);
+
+        if (!codePause || codeFail)
+            Serial.printf("\tCode: read fail");
         codeStart = 0;
     }
-    if (codeStart && (!codePause || codeFail)) {
-        Serial.printf("\tCode: read fail");
-        codeStart = 0;
-    }
+
     if (!codeStart) {
         Serial.printf("\nReading code... ");
         codeStart = 1;
@@ -123,7 +121,7 @@ void nextDigit()
 void pulseLong()
 {
     //Serial.printf("Long 1250 (%lu)\n", ledOnDuration);
-    if (codeStart && codePause){
+    if (codeStart && codePause) {
         Serial.printf("long ");
         errorCode++;
     } else {
@@ -135,7 +133,7 @@ void pulseLong()
 void pulseShort()
 {
     //Serial.printf("Short 500 (%lu)\n", ledOnDuration);
-    if (codeStart && !codePause){
+    if (codeStart && !codePause) {
         Serial.printf("short ");
         errorCode += 10;
     } else {
