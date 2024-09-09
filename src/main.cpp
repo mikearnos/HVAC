@@ -9,7 +9,7 @@
 //const char* password = STAPSK;
 
 bool ledStatus = 0, ledChanged = 0;
-bool codeStart, codePause, codeFail, readShortPulses, readLongPulses;
+bool codeStart, codePause, codeFail;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration;
 int errorCode;
 
@@ -104,8 +104,6 @@ void codeBegin()
         codeStart = 1;
         codePause = 0;
         codeFail = 0;
-        readShortPulses = 1;
-        readLongPulses = 0;
     }
     errorCode = 0;
 }
@@ -113,11 +111,9 @@ void codeBegin()
 void nextDigit()
 {
     //Serial.printf("Next digit 1000 (%lu)\n", ledOffDuration);
-    if (codeStart && !codePause) {
+    if (codeStart && !codePause) { // check for only 1 pause
         Serial.printf("pause ");
         codePause = 1;
-        readShortPulses = 0;
-        readLongPulses = 1;
     } else {
         codeFail = 1;
         Serial.printf("pause_err ");
@@ -127,7 +123,7 @@ void nextDigit()
 void pulseLong()
 {
     //Serial.printf("Long 1250 (%lu)\n", ledOnDuration);
-    if (codeStart && codePause && readLongPulses && !readShortPulses) {
+    if (codeStart && codePause){
         Serial.printf("long ");
         errorCode++;
     } else {
@@ -139,7 +135,7 @@ void pulseLong()
 void pulseShort()
 {
     //Serial.printf("Short 500 (%lu)\n", ledOnDuration);
-    if (codeStart && !codePause && readShortPulses && !readLongPulses) {
+    if (codeStart && !codePause){
         Serial.printf("short ");
         errorCode += 10;
     } else {
