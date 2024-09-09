@@ -1,3 +1,5 @@
+/* This will send out the error code 34 */
+
 #define LED PD4
 #define SHORT 1
 #define LONG 0
