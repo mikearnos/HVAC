@@ -33,10 +33,12 @@ IRAM_ATTR void ledChange()
         ledStatus = 1;
         ledOnStart = millis();
         ledOffDuration = millis() - ledOffStart; // record duration LED was off
+        //ledOffDuration = (ledOffDuration + 50) / 250 * 250;
     } else if (ledStatus && !readLED()) { // on to off
         ledStatus = 0;
         ledOffStart = millis();
         ledOnDuration = millis() - ledOnStart;
+        //ledOnDuration = (ledOnDuration + 50) / 250 * 250;
     }
 }
 
@@ -65,28 +67,24 @@ void decodeLED()
 {
     if (ledChanged) {
         if (ledStatus) {
-            if (ledOffDuration > 2450) {
+            if (ledOffDuration > 2200) { // begin code is low for 2250ms (repeat adds 250ms)
                 codeBegin();
-            } else if (ledOffDuration > 950) {
+            } else if (ledOffDuration > 950) { // pause between digits is low for 1000ms
                 nextDigit();
             }
         } else {
-            ledOnDuration += 250; // adjustment to account for pause
-            if (ledOnDuration > 1200) {
+            if (ledOnDuration > 950) { // long pulse is high 1000ms
                 pulseLong();
-            } else if (ledOnDuration > 450) {
+            } else if (ledOnDuration > 200) { // short pulse is high 250ms
                 pulseShort();
             }
         }
-
         ledChanged = 0;
     }
 }
 
 void codeBegin()
 {
-    //Serial.printf("Begin code 2500 (%lu)\n", ledOffDuration);
-
     // print last completed code
     if (codeStart) {
         if (codePause && errorCode && !codeFail) // code requires a start and a pause
@@ -96,9 +94,9 @@ void codeBegin()
             Serial.printf("\tCode: read fail");
         codeStart = 0;
     }
-
+    // start reading new code
     if (!codeStart) {
-        Serial.printf("\nReading code... ");
+        Serial.printf("\n%lu Reading code... ", ledOffDuration);
         codeStart = 1;
         codePause = 0;
         codeFail = 0;
@@ -108,11 +106,10 @@ void codeBegin()
 
 void nextDigit()
 {
-    //Serial.printf("Next digit 1000 (%lu)\n", ledOffDuration);
     if (codeStart && !codePause) { // check for only 1 pause
-        Serial.printf("pause ");
+        Serial.printf("p%lu ", ledOffDuration);
         codePause = 1;
-    } else {
+    } else { // code hasn't started yet, or pause already happened
         codeFail = 1;
         Serial.printf("pause_err ");
     }
@@ -120,9 +117,8 @@ void nextDigit()
 
 void pulseLong()
 {
-    //Serial.printf("Long 1250 (%lu)\n", ledOnDuration);
     if (codeStart && codePause) {
-        Serial.printf("long ");
+        Serial.printf("l%lu ", ledOnDuration);
         errorCode++;
     } else {
         codeFail = 1;
@@ -132,9 +128,8 @@ void pulseLong()
 
 void pulseShort()
 {
-    //Serial.printf("Short 500 (%lu)\n", ledOnDuration);
     if (codeStart && !codePause) {
-        Serial.printf("short ");
+        Serial.printf("s%lu ", ledOnDuration);
         errorCode += 10;
     } else {
         codeFail = 1;
