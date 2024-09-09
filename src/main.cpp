@@ -9,13 +9,19 @@
 //const char* password = STAPSK;
 
 bool ledStatus = 0, ledChanged = 0;
+bool codeStart, codePause, codeFail, readShortPulses, readLongPulses;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration;
+int errorCode;
 
 unsigned long last_print_time = millis();
 
 void decodeLED(void);
 void waitForLEDOff(void);
 int readLED(void);
+void pulseLong(void);
+void pulseShort(void);
+void codeBegin(void);
+void nextDigit(void);
 
 IRAM_ATTR void ledChange()
 {
@@ -39,6 +45,7 @@ void setup()
 {
     pinMode(DATA, INPUT);
     ledStatus = readLED();
+    errorCode = 0;
 
     Serial.begin(115200);
 
@@ -60,23 +67,85 @@ void loop()
 void decodeLED()
 {
     if (ledChanged) {
-        //ledOffDuration += 10; // small adjustment to make it more accurate
         if (ledStatus) {
             if (ledOffDuration > 2450) {
-                Serial.printf("Begin code 2500 (%lu)\n", ledOffDuration);
+                codeBegin();
             } else if (ledOffDuration > 950) {
-                Serial.printf("Next digit 1000 (%lu)\n", ledOffDuration);
+                nextDigit();
             }
         } else {
-            ledOnDuration += 250; // adjustment to make it more accurate
+            ledOnDuration += 250; // adjustment to account for pause
             if (ledOnDuration > 1200) {
-                Serial.printf("Long 1250 (%lu)\n", ledOnDuration);
+                pulseLong();
             } else if (ledOnDuration > 450) {
-                Serial.printf("Short 500 (%lu)\n", ledOnDuration);
+                pulseShort();
             }
         }
 
         ledChanged = 0;
+    }
+}
+
+void codeBegin()
+{
+    //Serial.printf("Begin code 2500 (%lu)\n", ledOffDuration);
+
+    // print last completed code
+    if (errorCode && codeStart && codePause && !codeFail) { // code requires a start and a pause
+        Serial.printf("\tCode: %d", errorCode);
+        codeStart = 0;
+        codePause = 0;
+    }
+    if (codeStart && (!codePause || codeFail)) {
+        Serial.printf("\tCode: read fail");
+        codeStart = 0;
+    }
+    if (!codeStart) {
+        Serial.printf("\nReading code... ");
+        codeStart = 1;
+        codePause = 0;
+        codeFail = 0;
+        readShortPulses = 1;
+        readLongPulses = 0;
+    }
+    errorCode = 0;
+}
+
+void nextDigit()
+{
+    //Serial.printf("Next digit 1000 (%lu)\n", ledOffDuration);
+    if (codeStart && !codePause) {
+        Serial.printf("pause ");
+        codePause = 1;
+        readShortPulses = 0;
+        readLongPulses = 1;
+    } else {
+        codeFail = 1;
+        Serial.printf("wait ");
+    }
+}
+
+void pulseLong()
+{
+    //Serial.printf("Long 1250 (%lu)\n", ledOnDuration);
+    if (codeStart && readLongPulses && !readShortPulses && codePause) {
+        Serial.printf("long ");
+        errorCode++;
+    } else {
+        codeFail = 1;
+        Serial.printf("lng_err ");
+    }
+}
+
+void pulseShort()
+{
+    //Serial.printf("Short 500 (%lu)\n", ledOnDuration);
+    if (codeStart && readShortPulses && !readLongPulses && !codePause) {
+        Serial.printf("short ");
+        errorCode += 10;
+    } else {
+        codeFail = 1;
+        Serial.printf("sh_err ");
     }
 }
 
