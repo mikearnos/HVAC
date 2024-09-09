@@ -9,7 +9,7 @@
 
 bool ledStatus = 0, ledChanged = 0;
 bool codeStart, codePause, codeFail;
-unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration;
+unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, lastChanged = 0;
 int errorCode = 0;
 
 void decodeLED(void);
@@ -23,17 +23,18 @@ IRAM_ATTR void ledChange()
     if (ledChanged)
         return;
 
+    lastChanged = millis();
     ledChanged = 1;
 
     if (!ledStatus && digitalRead(DATA)) { // off to on
         ledStatus = 1;
-        ledOnStart = millis();
-        ledOffDuration = millis() - ledOffStart; // record duration LED was off
+        ledOnStart = lastChanged;
+        ledOffDuration = lastChanged - ledOffStart; // record duration LED was off
         //ledOffDuration = (ledOffDuration + 50) / 250 * 250;
     } else if (ledStatus && !digitalRead(DATA)) { // on to off
         ledStatus = 0;
-        ledOffStart = millis();
-        ledOnDuration = millis() - ledOnStart;
+        ledOffStart = lastChanged;
+        ledOnDuration = lastChanged - ledOnStart;
         //ledOnDuration = (ledOnDuration + 50) / 250 * 250;
     }
 }
@@ -49,19 +50,24 @@ void setup()
 
 void loop()
 {
+    if (((millis() - lastChanged) > 5000) && digitalRead(DATA) && ledStatus) {
+        lastChanged = millis();
+        Serial.printf("\nSystem normal");
+    }
+
     decodeLED();
 }
 
 void decodeLED()
 {
     if (ledChanged) {
-        if (ledStatus) {
+        if (ledStatus) { // measure the duration of low pulses
             if (ledOffDuration > 2200) { // begin code is low for 2250ms (repeat adds 250ms)
                 codeBegin();
             } else if (ledOffDuration > 950) { // pause between digits is low for 1000ms
                 nextDigit();
             }
-        } else {
+        } else { // measure duration of high pulses
             if (ledOnDuration > 950) { // long pulse is high 1000ms
                 pulseLong();
             } else if (ledOnDuration > 200) { // short pulse is high 250ms
