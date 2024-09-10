@@ -1,11 +1,7 @@
 #include <Arduino.h>
-//#include <ESP8266WiFi.h>
-//#include "../../../wifi.h"
+#include "wifi_functions.h"
 
 #define DATA D5
-
-//const char* ssid = STASSID;
-//const char* password = STAPSK;
 
 bool ledStatus = 0, ledChanged = 0;
 bool codeStart, codePause, codeFail;
@@ -46,6 +42,16 @@ void setup()
     Serial.begin(115200);
 
     attachInterrupt(digitalPinToInterrupt(DATA), ledChange, CHANGE);
+
+    float connectionTimeSeconds = connectWifi();
+    if (connectionTimeSeconds)
+        Serial.printf("Connected in %.2f seconds\n", connectionTimeSeconds);
+    else
+        Serial.println("Could not connect\n");
+
+
+    Serial.println("Disconnecting from WiFi\n");
+    disconnectWiFi();
 }
 
 void loop()
