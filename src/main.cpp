@@ -106,14 +106,14 @@ void sendErrorCode()
 
 void loop()
 {
-    if (((millis() - lastChanged) > 5000) && (millis() - ledOnStart) > 4950 && ledStatus) {
-        lastChanged = millis();
-        Serial.printf("\nSystem normal");
-    }
+    if (((millis() - lastChanged) > 5000)) {
+        if ((millis() - ledOnStart) > 5000 && ledStatus) {
+            Serial.printf("\nSystem normal");
+        } else if ((millis() - ledOffStart) > 5000 && !ledStatus) {
 
-    if (((millis() - lastChanged) > 5000) && (millis() - ledOffStart) > 4950 && !ledStatus) {
+            Serial.printf("\nSystem off");
+        }
         lastChanged = millis();
-        Serial.printf("\nSystem off");
     }
 
     decodeLED();
