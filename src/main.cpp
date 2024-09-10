@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "wifi_functions.h"
 
-#define DATA D5
+#define LED D5
 
 bool ledStatus = 0, ledChanged = 0;
 bool codeStart, codePause, codeFail;
@@ -22,12 +22,12 @@ IRAM_ATTR void ledChange()
     lastChanged = millis();
     ledChanged = 1;
 
-    if (!ledStatus && digitalRead(DATA)) { // off to on
+    if (!ledStatus && digitalRead(LED)) { // off to on
         ledStatus = 1;
         ledOnStart = lastChanged;
         ledOffDuration = lastChanged - ledOffStart; // record duration LED was off
         //ledOffDuration = (ledOffDuration + 50) / 250 * 250;
-    } else if (ledStatus && !digitalRead(DATA)) { // on to off
+    } else if (ledStatus && !digitalRead(LED)) { // on to off
         ledStatus = 0;
         ledOffStart = lastChanged;
         ledOnDuration = lastChanged - ledOnStart;
@@ -37,11 +37,11 @@ IRAM_ATTR void ledChange()
 
 void setup()
 {
-    pinMode(DATA, INPUT);
+    pinMode(LED, INPUT);
 
     Serial.begin(115200);
 
-    attachInterrupt(digitalPinToInterrupt(DATA), ledChange, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
 
     float connectionTimeSeconds = connectWifi();
     if (connectionTimeSeconds)
@@ -49,14 +49,13 @@ void setup()
     else
         Serial.println("Could not connect\n");
 
-
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
 }
 
 void loop()
 {
-    if (((millis() - lastChanged) > 5000) && digitalRead(DATA) && ledStatus) {
+    if (((millis() - lastChanged) > 5000) && digitalRead(LED) && ledStatus) {
         lastChanged = millis();
         Serial.printf("\nSystem normal");
     }
