@@ -55,13 +55,15 @@ void setup()
 
     attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
 
-    errorCode = 34;
-    sendErrorCode();
+    ledChange(); // sets things up to detect system normal on startup
+
+    //errorCode = 34;
+    //sendErrorCode();
 }
 
 void sendErrorCode()
 {
-        // connect to WiFi
+    // connect to WiFi
     float connectionTimeSeconds = connectWifi();
     if (connectionTimeSeconds)
         Serial.printf("Connected in %.2f seconds\n", connectionTimeSeconds);
@@ -104,9 +106,14 @@ void sendErrorCode()
 
 void loop()
 {
-    if (((millis() - lastChanged) > 10000) && digitalRead(LED) && ledStatus) {
+    if (((millis() - lastChanged) > 5000) && (millis() - ledOnStart) > 4950 && ledStatus) {
         lastChanged = millis();
         Serial.printf("\nSystem normal");
+    }
+
+    if (((millis() - lastChanged) > 5000) && (millis() - ledOffStart) > 4950 && !ledStatus) {
+        lastChanged = millis();
+        Serial.printf("\nSystem off");
     }
 
     decodeLED();
