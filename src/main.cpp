@@ -106,13 +106,12 @@ void sendErrorCode()
 
 void loop()
 {
-    if (((millis() - lastChanged) > 5000)) {
-        if ((millis() - ledOnStart) > 5000 && ledStatus) {
+    if (((millis() - lastChanged) > 5000)) { // five seconds since last change
+        if ((millis() - ledOnStart) > 5000 && ledStatus)
             Serial.printf("\nSystem normal");
-        } else if ((millis() - ledOffStart) > 5000 && !ledStatus) {
-
+        else if ((millis() - ledOffStart) > 5000 && !ledStatus)
             Serial.printf("\nSystem off");
-        }
+
         lastChanged = millis();
     }
 

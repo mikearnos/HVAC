@@ -3,13 +3,6 @@
 #include "../../../wifi.h"
 #include "wifi_functions.h"
 
-void disconnectWiFi()
-{
-    WiFi.disconnect(true);
-    WiFi.mode(WIFI_OFF);
-    delay(1);
-}
-
 float connectWifi()
 {
     // turn on wifi radio
@@ -40,4 +33,11 @@ float waitForConnection()
         }
     }
     return counter / 1000.0;
+}
+
+void disconnectWiFi()
+{
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    delay(1);
 }
