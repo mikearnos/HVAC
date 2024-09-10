@@ -19,6 +19,7 @@ bool codeStart, codePause, codeFail;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, lastChanged = 0;
 int errorCode = 0;
 
+void sendErrorCode(void);
 void decodeLED(void);
 void pulseLong(void);
 void pulseShort(void);
@@ -54,7 +55,13 @@ void setup()
 
     attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
 
-    // connect to WiFi
+    errorCode = 34;
+    sendErrorCode();
+}
+
+void sendErrorCode()
+{
+        // connect to WiFi
     float connectionTimeSeconds = connectWifi();
     if (connectionTimeSeconds)
         Serial.printf("Connected in %.2f seconds\n", connectionTimeSeconds);
@@ -74,8 +81,6 @@ void setup()
         }
     }
 
-    errorCode = 0;
-
     // create JSON
     StaticJsonDocument<128> doc;
     if (errorCode) {
@@ -83,15 +88,15 @@ void setup()
     } else {
         doc["status"] = String("OK");
     }
-    doc["connect"] = connectionTimeSeconds; // already 2 decimal places
     doc["code"] = errorCode;
+    doc["connect"] = connectionTimeSeconds; // already 2 decimal places
 
     char jsonBuf[128];
     size_t n = serializeJson(doc, jsonBuf);
 
     // send MQTT
     mqtt.publish(MQTT_TOPIC "/message", (uint8_t*)jsonBuf, (unsigned int)n);
-    delay(200); //wait for data to be published.
+    delay(100); //wait for data to be published (2ms works).
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
