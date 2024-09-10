@@ -55,7 +55,7 @@ void setup()
 
 void loop()
 {
-    if (((millis() - lastChanged) > 5000) && digitalRead(LED) && ledStatus) {
+    if (((millis() - lastChanged) > 10000) && digitalRead(LED) && ledStatus) {
         lastChanged = millis();
         Serial.printf("\nSystem normal");
     }
