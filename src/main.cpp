@@ -1,7 +1,18 @@
 #include <Arduino.h>
+#include <ESP8266WiFi.h>
 #include "wifi_functions.h"
+#include "../../../wifi.h"
+#include <PubSubClient.h>
+#include <ArduinoJson.h> // bblanchon/ArduinoJson 6.18.3
 
 #define LED D5
+
+#define MQTT_PORT 1883
+#define CLIENT_ID "ESP_HVAC"
+#define MQTT_TOPIC "furnace"
+
+WiFiClient espClient;
+PubSubClient mqtt(espClient);
 
 bool ledStatus = 0, ledChanged = 0;
 bool codeStart, codePause, codeFail;
@@ -43,11 +54,44 @@ void setup()
 
     attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
 
+    // connect to WiFi
     float connectionTimeSeconds = connectWifi();
     if (connectionTimeSeconds)
         Serial.printf("Connected in %.2f seconds\n", connectionTimeSeconds);
     else
         Serial.println("Could not connect\n");
+
+    // connect to MQTT
+    mqtt.setServer(MQTT_SERVER, MQTT_PORT);
+    while (!mqtt.connected()) {
+        Serial.println("Connecting to MQTT...");
+        if (mqtt.connect(CLIENT_ID)) {
+            Serial.println("Connected");
+        } else {
+            Serial.print("Failed with state ");
+            Serial.println(mqtt.state());
+            delay(2000);
+        }
+    }
+
+    errorCode = 0;
+
+    // create JSON
+    StaticJsonDocument<128> doc;
+    if (errorCode) {
+        doc["status"] = String("ERROR");
+    } else {
+        doc["status"] = String("OK");
+    }
+    doc["connect"] = connectionTimeSeconds; // already 2 decimal places
+    doc["code"] = errorCode;
+
+    char jsonBuf[128];
+    size_t n = serializeJson(doc, jsonBuf);
+
+    // send MQTT
+    mqtt.publish(MQTT_TOPIC "/message", (uint8_t*)jsonBuf, (unsigned int)n);
+    delay(200); //wait for data to be published.
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
