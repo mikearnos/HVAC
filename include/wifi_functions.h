@@ -7,3 +7,6 @@
 float connectWifi(void);
 float waitForConnection(void);
 void disconnectWiFi(void);
+
+extern bool codeSent;
+extern unsigned long codeSentLast;

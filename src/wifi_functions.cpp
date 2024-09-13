@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-//#include "../../../wifi.h"
 #include "wifi_functions.h"
+
+bool codeSent = 0;
+unsigned long codeSentLast;
 
 float connectWifi()
 {

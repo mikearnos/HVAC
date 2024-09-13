@@ -8,7 +8,7 @@
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
 
-void sendErrorCode(void);
+void sendStatus(void);
 
 void setup()
 {
@@ -21,10 +21,15 @@ void setup()
     ledChange(); // sets things up to detect system normal on startup
 
     //errorCode = 34;
-    //sendErrorCode();
+    //sendStatus();
 }
 
-void sendErrorCode()
+void loop()
+{
+    decodeLED();
+}
+
+void sendStatus()
 {
     // connect to WiFi
     float connectionTimeSeconds = connectWifi();
@@ -65,9 +70,7 @@ void sendErrorCode()
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
-}
 
-void loop()
-{
-    decodeLED();
+    codeSent = 1;
+    codeSentLast = millis();
 }
