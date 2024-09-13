@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include "wifi_functions.h"
-#include "../../../wifi.h"
+#include "../../../wifi.h" // local WiFi credentials
 #include <PubSubClient.h>
-#include <ArduinoJson.h> // bblanchon/ArduinoJson 6.18.3
+#include <ArduinoJson.h>
 
 #define LED D5
 
