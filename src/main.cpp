@@ -8,7 +8,7 @@
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
 
-void sendStatus(void);
+void sendStatus(int);
 
 void setup()
 {
@@ -29,8 +29,15 @@ void loop()
     decodeLED();
 }
 
-void sendStatus()
+void sendStatus(int newStatus)
 {
+    if (newStatus == systemStatus) // only transmit when status changes
+        return;
+
+    systemStatus = newStatus;
+
+    //int connectBegin = millis();
+
     // connect to WiFi
     float connectionTimeSeconds = connectWifi();
     if (connectionTimeSeconds)
@@ -41,7 +48,7 @@ void sendStatus()
     // connect to MQTT
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);
     while (!mqtt.connected()) {
-        Serial.println("Connecting to MQTT...");
+        Serial.print("Connecting to MQTT... ");
         if (mqtt.connect(CLIENT_ID)) {
             Serial.println("Connected");
         } else {
@@ -53,12 +60,14 @@ void sendStatus()
 
     // create JSON
     StaticJsonDocument<128> doc;
-    if (errorCode) {
-        doc["status"] = String("ERROR");
-    } else {
+    if (systemStatus == STATUS_NORMAL)
         doc["status"] = String("OK");
+    else if (systemStatus == STATUS_OFF)
+        doc["status"] = String("OFF");
+    else if (errorCode) {
+        doc["status"] = String("ERROR");
+        doc["code"] = errorCode;
     }
-    doc["code"] = errorCode;
     doc["connect"] = connectionTimeSeconds; // already 2 decimal places
 
     char jsonBuf[128];
@@ -68,9 +77,15 @@ void sendStatus()
     mqtt.publish(MQTT_TOPIC "/message", (uint8_t*)jsonBuf, (unsigned int)n);
     delay(100); //wait for data to be published (2ms works).
 
+    Serial.printf("MQTT sent: %s\n", (uint8_t*)jsonBuf);
+
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
 
     codeSent = 1;
     codeSentLast = millis();
+
+    //lastChanged = codeSentLast;
+    ledOffStart = codeSentLast;
+    ledOnStart = codeSentLast;
 }

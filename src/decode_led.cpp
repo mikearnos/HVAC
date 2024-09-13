@@ -2,16 +2,12 @@
 #include "wifi_functions.h"
 #include "decode_led.h"
 
-#define STATUS_OFF 0
-#define STATUS_NORMAL 1
-#define STATUS_ERROR 2
-
 bool ledStatus = 0, ledChanged = 0;
 bool codeStart, codePause, codeFail;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, lastChanged = 0;
-int errorCode = 0, systemStatus = 0;
+int errorCode = 0, systemStatus = -1;
 
-extern void sendStatus(void);
+extern void sendStatus(int);
 
 IRAM_ATTR void ledChange()
 {
@@ -34,24 +30,16 @@ IRAM_ATTR void ledChange()
 
 void decodeLED()
 {
-    if ((millis() - lastChanged) > 5000) { // five seconds since last change
-        if ((millis() - ledOnStart) > 15000 && ledStatus) {
+    if ((millis() - lastChanged) > 5000) {
+        if ((millis() - ledOnStart) > 5000 && ledStatus) {
             Serial.printf("System normal\n");
-            if (systemStatus != STATUS_NORMAL)
-                sendStatus();
-            systemStatus = STATUS_NORMAL;
-        } else if ((millis() - ledOffStart) > 15000 && !ledStatus) {
+                sendStatus(STATUS_NORMAL);
+        } else if ((millis() - ledOffStart) > 5000 && !ledStatus) {
             Serial.printf("System off\n");
-            if (systemStatus != STATUS_OFF)
-                sendStatus();
-            systemStatus = STATUS_OFF;
+                sendStatus(STATUS_OFF);
         }
 
         lastChanged = millis();
-    }
-
-    if (codeSent && millis() - codeSentLast > 30000) {
-        codeSent = 0;
     }
 
     if (ledChanged) {
@@ -78,13 +66,9 @@ void codeBegin()
     if (codeStart) {
         if (codePause && errorCode && !codeFail) { // code requires a start and a pause
             Serial.printf("\tCode: %d\n", errorCode);
-            if (systemStatus != STATUS_ERROR)
-                sendStatus();
-            systemStatus = STATUS_ERROR;
+                sendStatus(STATUS_ERROR);
         } else if (!codePause || codeFail)
             Serial.printf("\tCode: read fail\n");
-        else
-            Serial.printf("newline:\n");
         codeStart = 0;
     }
     // start reading new code
