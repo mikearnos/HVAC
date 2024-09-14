@@ -2,7 +2,7 @@
 #include "wifi_functions.h"
 #include "decode_led.h"
 
-bool ledStatus = 0, ledChanged = 0;
+bool ledStatus, ledChanged = 0;
 bool codeStart, codePause, codeFail;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, lastChanged = 0;
 int errorCode = 0, systemStatus = -1;
@@ -30,13 +30,15 @@ IRAM_ATTR void ledChange()
 
 void decodeLED()
 {
-    if ((millis() - lastChanged) > 5000) {
-        if ((millis() - ledOnStart) > 5000 && ledStatus) {
+    if ((millis() - lastChanged) > 5000) { // show status every 5 seconds
+        if ((millis() - ledOnStart) > 6000 && ledStatus) {
             Serial.printf("System normal\n");
-                sendStatus(STATUS_NORMAL);
-        } else if ((millis() - ledOffStart) > 5000 && !ledStatus) {
+            ledOffStart = millis();
+            sendStatus(STATUS_NORMAL);
+        } else if ((millis() - ledOffStart) > 6000 && !ledStatus) {
             Serial.printf("System off\n");
-                sendStatus(STATUS_OFF);
+            ledOnStart = millis();
+            sendStatus(STATUS_OFF);
         }
 
         lastChanged = millis();
@@ -66,7 +68,7 @@ void codeBegin()
     if (codeStart) {
         if (codePause && errorCode && !codeFail) { // code requires a start and a pause
             Serial.printf("\tCode: %d\n", errorCode);
-                sendStatus(STATUS_ERROR);
+            sendStatus(STATUS_ERROR);
         } else if (!codePause || codeFail)
             Serial.printf("\tCode: read fail\n");
         codeStart = 0;

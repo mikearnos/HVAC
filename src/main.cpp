@@ -18,6 +18,7 @@ void setup()
 
     attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
 
+    ledStatus = digitalRead(LED) ^ 1;
     ledChange(); // sets things up to detect system normal on startup
 
     //errorCode = 34;
@@ -35,8 +36,6 @@ void sendStatus(int newStatus)
         return;
 
     systemStatus = newStatus;
-
-    //int connectBegin = millis();
 
     // connect to WiFi
     float connectionTimeSeconds = connectWifi();
@@ -85,7 +84,12 @@ void sendStatus(int newStatus)
     codeSent = 1;
     codeSentLast = millis();
 
-    //lastChanged = codeSentLast;
+    // reset start times because WiFi can take about 5 seconds to connect
     ledOffStart = codeSentLast;
     ledOnStart = codeSentLast;
+    ledOffDuration = 0;
+    ledOnDuration = 0;
+    codeStart = 0;
+    codePause = 0;
+    codeFail = 1;
 }
