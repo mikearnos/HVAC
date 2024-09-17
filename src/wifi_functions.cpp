@@ -12,7 +12,7 @@ float connectWifi()
     delay(1);
     WiFi.mode(WIFI_STA); //This line hides the viewing of ESP as wifi network
 
-    // connect to wifi
+    // connect to WiFi
     Serial.printf("Connecting to %s\n", STASSID);
     WiFi.begin(STASSID, STAPSK);
 
@@ -27,10 +27,10 @@ float connectWifi()
 float waitForConnection()
 {
     // returns 0 if not connected, connection time in seconds if connected
-    int16_t counter = 0;
+    int counter = 0;
     while (WiFi.status() != WL_CONNECTED) {
         delay(10);
-        if ((counter += 10) == 10000) { // 10 seconds
+        if ((counter += 10) >= 10000) { // 10 seconds
             return 0;
         }
     }
