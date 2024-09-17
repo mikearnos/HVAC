@@ -4,7 +4,7 @@
 
 bool ledStatus, ledChanged = 0;
 bool codeStart, codePause, codeFail;
-unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, lastChanged = 0;
+unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, lastChanged;
 int errorCode = 0, systemStatus = -1;
 
 extern void sendStatus(int);
@@ -14,36 +14,22 @@ IRAM_ATTR void ledChange()
     if (ledChanged)
         return;
 
-    lastChanged = millis();
     ledChanged = 1;
+    lastChanged = millis();
 
-    if (!ledStatus && digitalRead(LED)) { // off to on
+    if (digitalRead(LED)) { // off to on
         ledStatus = 1;
         ledOnStart = lastChanged;
-        ledOffDuration = lastChanged - ledOffStart; // record duration LED was off
-    } else if (ledStatus && !digitalRead(LED)) { // on to off
+        ledOffDuration = millis() - ledOffStart; // record duration LED was off
+    } else { // on to off
         ledStatus = 0;
         ledOffStart = lastChanged;
-        ledOnDuration = lastChanged - ledOnStart;
+        ledOnDuration = millis() - ledOnStart;
     }
 }
 
 void decodeLED()
 {
-    if ((millis() - lastChanged) > 5000) { // show status every 5 seconds
-        if ((millis() - ledOnStart) > 6000 && ledStatus) {
-            Serial.printf("System normal\n");
-            ledOffStart = millis();
-            sendStatus(STATUS_NORMAL);
-        } else if ((millis() - ledOffStart) > 6000 && !ledStatus) {
-            Serial.printf("System off\n");
-            ledOnStart = millis();
-            sendStatus(STATUS_OFF);
-        }
-
-        lastChanged = millis();
-    }
-
     if (ledChanged) {
         if (ledStatus) { // measure the duration of low pulses
             if (ledOffDuration > 2200) { // code begin is low for 2250ms (repeat adds 250ms)
@@ -59,6 +45,24 @@ void decodeLED()
             }
         }
         ledChanged = 0;
+    }
+
+    if ((millis() - lastChanged) > 3500) { // if LED has not changed in 3500ms
+        static unsigned long lastPrint;
+        if (millis() - lastPrint > 5000) { // print every 5 seconds
+            if (ledStatus) {
+                Serial.printf("System normal\n");
+                sendStatus(STATUS_NORMAL);
+            } else {
+                Serial.printf("System off\n");
+                sendStatus(STATUS_OFF);
+            }
+            lastPrint = millis();
+        }
+        ledOnDuration = 0;
+        ledOffDuration = 0;
+        codeStart = 0;
+        codePause = 0;
     }
 }
 
