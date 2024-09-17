@@ -82,6 +82,7 @@ void sendStatus(int newStatus)
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
 
+    // reset flags in case WiFi interrupted a code read
     ledOnDuration = 0;
     ledOffDuration = 0;
     codeStart = 0;

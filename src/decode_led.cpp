@@ -47,9 +47,9 @@ void decodeLED()
         ledChanged = 0;
     }
 
-    if ((millis() - lastChanged) > 3500) { // if LED has not changed in 3500ms
+    if ((millis() - lastChanged) > 10000) { // if LED has not changed in 10 seconds
         static unsigned long lastPrint;
-        if (millis() - lastPrint > 5000) { // print every 5 seconds
+        if (millis() - lastPrint > 5000) { // print status every 5 seconds
             if (ledStatus) {
                 Serial.printf("System normal\n");
                 sendStatus(STATUS_NORMAL);
