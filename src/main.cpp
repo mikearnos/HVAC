@@ -12,14 +12,15 @@ void sendStatus(int);
 
 void setup()
 {
-    pinMode(LED, INPUT);
-
     Serial.begin(115200);
 
-    attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
-
+    pinMode(LED, INPUT);
     ledStatus = digitalRead(LED) ^ 1;
     ledChange(); // sets things up to detect system normal on startup
+
+    systemStatus = -1;
+
+    attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
 
     //errorCode = 34;
     //sendStatus();
@@ -81,15 +82,13 @@ void sendStatus(int newStatus)
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
 
-    codeSent = 1;
-    codeSentLast = millis();
-
-    // reset start times because WiFi can take about 5 seconds to connect
-    ledOffStart = codeSentLast;
-    ledOnStart = codeSentLast;
-    ledOffDuration = 0;
     ledOnDuration = 0;
+    ledOffDuration = 0;
     codeStart = 0;
     codePause = 0;
     codeFail = 1;
+    lastChanged = millis();
+
+    //codeSent = 1;
+    //codeSentLast = millis();
 }

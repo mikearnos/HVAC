@@ -63,6 +63,7 @@ void decodeLED()
         ledOffDuration = 0;
         codeStart = 0;
         codePause = 0;
+        codeFail = 1;
     }
 }
 

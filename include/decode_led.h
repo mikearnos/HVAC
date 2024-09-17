@@ -4,9 +4,10 @@
 #define STATUS_NORMAL 1
 #define STATUS_ERROR 2
 
-extern bool ledStatus, codeStart, codePause, codeFail;
-extern unsigned long ledOnStart, ledOffStart, lastChanged, ledOnDuration, ledOffDuration;
+extern bool ledStatus;
 extern int errorCode, systemStatus;
+extern bool codeStart, codePause, codeFail;
+extern unsigned long ledOnDuration, ledOffDuration, lastChanged;
 
 void ledChange(void);
 void decodeLED(void);
