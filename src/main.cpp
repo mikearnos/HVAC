@@ -8,6 +8,9 @@
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
 
+bool codeSent[3] = { 0, 0, 0 };
+unsigned long codeSentLast[3] = { 0, 0, 0 };
+
 void sendStatus(int);
 
 void setup()
@@ -37,6 +40,12 @@ void sendStatus(int newStatus)
         return;
 
     systemStatus = newStatus;
+
+    /*if (millis() - codeSentLast[newStatus] > 60000) {
+        codeSentLast[newStatus] = millis();
+    } else {
+        return;
+    }*/
 
     // connect to WiFi
     float connectionTimeSeconds = connectWifi();

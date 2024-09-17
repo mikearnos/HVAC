@@ -59,6 +59,8 @@ void decodeLED()
             }
             lastPrint = millis();
         }
+        ledOnStart = millis();
+        ledOffStart = millis();
         ledOnDuration = 0;
         ledOffDuration = 0;
         codeStart = 0;
