@@ -4,6 +4,10 @@
 #include <ArduinoJson.h>
 #include "wifi_functions.h"
 #include "decode_led.h"
+#include <wire.h>
+
+#include <WarmCat_6x14Backpack.h>
+WarmCat6x14 myDisp(1);
 
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
@@ -16,6 +20,12 @@ void sendStatus(int);
 void setup()
 {
     Serial.begin(115200);
+
+    myDisp.begin();
+    myDisp.setBrightness(2);
+
+    myDisp.swirly(40);
+    myDisp.clear();
 
     pinMode(LED, INPUT);
     ledStatus = digitalRead(LED) ^ 1;

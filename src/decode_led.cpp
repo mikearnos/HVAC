@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "wifi_functions.h"
 #include "decode_led.h"
+#include <WarmCat_6x14Backpack.h>
 
 bool ledStatus, ledChanged = 0;
 bool codeStart, codePause, codeFail;
@@ -8,6 +9,7 @@ unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, la
 int errorCode = 0, systemStatus = -1;
 
 extern void sendStatus(int);
+extern WarmCat6x14 myDisp;
 
 IRAM_ATTR void ledChange()
 {
@@ -52,9 +54,13 @@ void decodeLED()
         if (millis() - lastPrint > 5000) { // print status every 5 seconds
             if (ledStatus) {
                 Serial.printf("System normal\n");
+                myDisp.blink(0);
+                myDisp.scrollText((char*)" OK ", 200);
                 sendStatus(STATUS_NORMAL);
             } else {
                 Serial.printf("System off\n");
+                myDisp.blink(0);
+                myDisp.scrollText((char*)" OFF", 200);
                 sendStatus(STATUS_OFF);
             }
             lastPrint = millis();
@@ -74,7 +80,14 @@ void codeBegin()
     // print last completed code
     if (codeStart) {
         if (codePause && errorCode && !codeFail) { // code requires a start and a pause
+            char message[4 + 1];
             Serial.printf("\tCode: %d\n", errorCode);
+            if (errorCode >= 0 && errorCode <= 99) {
+                sprintf(message, " %d ", errorCode);
+                myDisp.blink(0);
+                myDisp.disp4Char(message, 0);
+                myDisp.blink(3);
+            }
             sendStatus(STATUS_ERROR);
         } else if (!codePause || codeFail)
             Serial.printf("\tCode: read fail\n");
