@@ -155,6 +155,7 @@ class WarmCat6x14
     void emptyScrollBuffer(void);
 
     void dots();
+    void disp4Char(char text[], uint8_t disp);
     void disp6Char(char text[], uint8_t disp);
     void scrollText(char text[], int scrollrate = 120);
     void dispChar(uint8_t disp, uint8_t digit, byte ascii, bool dp = false);

@@ -9,6 +9,8 @@
  *  Any reproduction must include above text.
  */
 
+// modified a little to work for 4 digits
+
 #include "Arduino.h"
 #include "WarmCat_6x14Backpack.h"
 
@@ -24,7 +26,7 @@ void WarmCat6x14::begin(void) {
     Wire.beginTransmission(DisplayNo[disp]);
     Wire.write(0x20 | 1); // turn on oscillator
     Wire.endTransmission();
-    setBrightness(15);
+    //setBrightness(15);
     blink(0);
     delay(2);
   }
@@ -88,13 +90,21 @@ void WarmCat6x14::emptyScrollBuffer(void) {
 void WarmCat6x14::dots(void) {
   clear();
   for (int disp=_displayCount-1; disp>=0 ; disp--) {
-    for (int digit=5; digit>=0; digit--) {
+    //for (int digit=5; digit>=0; digit--) {
+      for (int digit=3; digit>=0; digit--) {
       displayBuffer[digit] = 0b100000000000000;
       showOnDisp(disp);
       delay(100);
     }
       memset(displayBuffer, 0, sizeof(displayBuffer));
   }
+}
+
+void WarmCat6x14::disp4Char(char text[], uint8_t disp) {
+  for (uint8_t x=0;x<4;x++) {
+    displayBuffer[x] = FourteenSegmentASCII[text[x]-32];
+  }
+  showOnDisp(disp);
 }
 
 void WarmCat6x14::disp6Char(char text[], uint8_t disp) {
@@ -124,14 +134,16 @@ void WarmCat6x14::scrollText(char text[], int scrollrate) {
       scrollBuffer[disp][0]=scrollBuffer[disp][1];
       scrollBuffer[disp][1]=scrollBuffer[disp][2];
       scrollBuffer[disp][2]=scrollBuffer[disp][3];
-      scrollBuffer[disp][3]=scrollBuffer[disp][4];
-      scrollBuffer[disp][4]=scrollBuffer[disp][5];
+      //scrollBuffer[disp][3]=scrollBuffer[disp][4];
+      //scrollBuffer[disp][4]=scrollBuffer[disp][5];
       if (disp==_displayCount-1) {
         // get next character from the buffer if this is the first backpack
-        scrollBuffer[disp][5]=FourteenSegmentASCII[text[i]-32];
+        //scrollBuffer[disp][5]=FourteenSegmentASCII[text[i]-32];
+        scrollBuffer[disp][3]=FourteenSegmentASCII[text[i]-32];
       } else {
         // else shift from the previous display backpack
-        scrollBuffer[disp][5]=scrollBuffer[disp+1][0];
+        //scrollBuffer[disp][5]=scrollBuffer[disp+1][0];
+        scrollBuffer[disp][3]=scrollBuffer[disp+1][0];
       }
     }
     if (testText) {
@@ -145,7 +157,7 @@ void WarmCat6x14::scrollText(char text[], int scrollrate) {
     Serial.println("");
     Serial.println("Done!");
   }
-  delay(2000);
+  //delay(2000);
 }
 
 void WarmCat6x14::dispChar(uint8_t disp, uint8_t digit, byte ascii, bool dp) {
@@ -158,7 +170,8 @@ void WarmCat6x14::dispChar(uint8_t disp, uint8_t digit, byte ascii, bool dp) {
 void WarmCat6x14::swirlyAll(int swirlrate) {
   clear();
   for (int x = 0 ; x < 14 ; x++) {
-    for (int d=0; d<6; d++) {
+    //for (int d=0; d<6; d++) {
+      for (int d=0; d<4; d++) {
       displayBuffer[d] |= Swirly[x];
     }
     for (int disp=0; disp<_displayCount; disp++) {
@@ -172,7 +185,8 @@ void WarmCat6x14::swirlyAll(int swirlrate) {
 void WarmCat6x14::swirly(int swirlrate) {
   clear();
   for (int disp=_displayCount-1; disp>=0; disp--) {
-    for (int d=5; d>=0; d--) {
+    //for (int d=5; d>=0; d--) {
+      for (int d=3; d>=0; d--) {
       for (int x=0; x<14; x++) {
         displayBuffer[d] |= Swirly[x];
         showOnDisp(disp);
@@ -209,14 +223,16 @@ void WarmCat6x14::scrollSerialText(char c, int scrollrate) {
     scrollBuffer[disp][0]=scrollBuffer[disp][1];
     scrollBuffer[disp][1]=scrollBuffer[disp][2];
     scrollBuffer[disp][2]=scrollBuffer[disp][3];
-    scrollBuffer[disp][3]=scrollBuffer[disp][4];
-    scrollBuffer[disp][4]=scrollBuffer[disp][5];
+    //scrollBuffer[disp][3]=scrollBuffer[disp][4];
+    //scrollBuffer[disp][4]=scrollBuffer[disp][5];
     if (disp==_displayCount-1) {
       // get next character from the buffer if this is the first backpack
-      scrollBuffer[disp][5]=FourteenSegmentASCII[c-32];
+      //scrollBuffer[disp][5]=FourteenSegmentASCII[c-32];
+      scrollBuffer[disp][3]=FourteenSegmentASCII[c-32];
     } else {
       // else shift from the previous display backpack
-      scrollBuffer[disp][5]=scrollBuffer[disp+1][0];
+      //scrollBuffer[disp][5]=scrollBuffer[disp+1][0];
+      scrollBuffer[disp][3]=scrollBuffer[disp+1][0];
     }
   }
   showScroll();
