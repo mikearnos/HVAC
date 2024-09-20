@@ -81,8 +81,11 @@ float waitForConnection()
 void disconnectWiFi()
 {
     WiFi.disconnect(true);
+    delay(10);
     WiFi.mode(WIFI_OFF);
-    delay(1);
+    delay(10);
+    WiFi.forceSleepBegin();
+    delay(10);
 }
 
 bool loadRTCData()
