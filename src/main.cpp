@@ -42,6 +42,8 @@ void setup()
 void loop()
 {
     decodeLED();
+
+    delay(1);  // let the ESP do its thing, otherwise it can interfere with the timings
 }
 
 void sendStatus(int newStatus)
@@ -98,18 +100,14 @@ void sendStatus(int newStatus)
     delay(100); //wait for data to be published (2ms works).
 
     Serial.printf("MQTT sent: %s\n", (uint8_t*)jsonBuf);
-    mqtt.disconnect();  // required when disconnecting WiFi
+    mqtt.disconnect();  // required before disconnecting WiFi
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
 
     // reset flags in case WiFi interrupted a code read
-    ledOnDuration = 0;
-    ledOffDuration = 0;
-    codeStart = 0;
-    codePause = 0;
-    codeFail = 1;
-    lastChanged = millis();
+    //ledOnDuration = 0;
+    //ledOffDuration = 0;
 
     //codeSent = 1;
     //codeSentLast = millis();
