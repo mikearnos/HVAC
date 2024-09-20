@@ -97,6 +97,7 @@ void sendStatus(int newStatus)
     delay(100); //wait for data to be published (2ms works).
 
     Serial.printf("MQTT sent: %s\n", (uint8_t*)jsonBuf);
+    mqtt.disconnect();
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
