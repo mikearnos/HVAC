@@ -71,9 +71,10 @@ void sendStatus(int newStatus)
         if (mqtt.connect(CLIENT_ID)) {
             Serial.println("Connected");
         } else {
-            Serial.print("Failed with state ");
+            Serial.print("MQTT connect failed with state ");
             Serial.println(mqtt.state());
-            delay(2000);
+            //delay(2000);
+            return;
         }
     }
 
@@ -97,7 +98,7 @@ void sendStatus(int newStatus)
     delay(100); //wait for data to be published (2ms works).
 
     Serial.printf("MQTT sent: %s\n", (uint8_t*)jsonBuf);
-    mqtt.disconnect();
+    mqtt.disconnect();  // required when disconnecting WiFi
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
