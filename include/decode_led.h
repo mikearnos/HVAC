@@ -7,7 +7,7 @@
 extern bool ledStatus;
 extern int errorCode, systemStatus;
 extern bool codeStart, codePause, codeFail;
-extern unsigned long ledOnDuration, ledOffDuration, lastChanged;
+extern unsigned long ledOnDuration, ledOffDuration, ledLastChanged;
 
 void ledChange(void);
 void decodeLED(void);
