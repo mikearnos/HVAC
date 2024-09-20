@@ -1,7 +1,6 @@
 #include "../../../wifi.h" // local WiFi credentials
 
 #define ESP_STATIC_IP 192, 168, 1, 61
-#define MQTT_PORT 1883
 #define CLIENT_ID "ESP_HVAC"
 #define MQTT_TOPIC "furnace"
 
