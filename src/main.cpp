@@ -74,16 +74,22 @@ void sendStatus(int newStatus)
     if (millis() - codeSentLast[newStatus] < MQTT_THROTTLE_TIME) {
         // we only want to send MQTT messages every so often
         printConnectWaitStatus();
-        codeSentLast[newStatus] = millis();
         return;
     }
 
     // connect to WiFi
     float connectionTimeSeconds = connectWifi();
-    if (connectionTimeSeconds) {
-        //Serial.printf("Connected in %.2f seconds\n", connectionTimeSeconds);
-    } else
+    if (!connectionTimeSeconds) {
         Serial.println("Could not connect\n");
+        myDisp.blink(0);
+        for (int i = 10; i; i--) {
+            myDisp.scrollText((char*)" NO ", 200);
+            delay(1000);
+            myDisp.scrollText((char*)"WIFI", 200);
+            delay(1000);
+        }
+        return;
+    }
 
     // connect to MQTT
     mqtt.setServer(MQTT_SERVER, MQTT_PORT);
@@ -94,6 +100,8 @@ void sendStatus(int newStatus)
         } else {
             Serial.print("MQTT connect failed with state ");
             Serial.println(mqtt.state());
+            Serial.println("Disconnecting from WiFi\n");
+            disconnectWiFi();
             return;
         }
     }
@@ -122,6 +130,8 @@ void sendStatus(int newStatus)
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
+
+    codeSentLast[newStatus] = millis();
 
     // reset flags in case WiFi interrupted a code read
     //ledOnDuration = 0;
