@@ -34,7 +34,7 @@ float connectWifi()
 
     if (loadRTCData()) {
         // The RTC data was good, make a quick connection
-        Serial.printf("RTC valid, quick connect to %s\n", STASSID);
+        Serial.printf("Quick connect to %s\n", STASSID);
         WiFi.begin(STASSID, STAPSK, wifiSettings.ap_channel, wifiSettings.ap_mac, true);
         connectionTimeSeconds = waitForConnection();
         if (connectionTimeSeconds) {
