@@ -12,7 +12,7 @@ WarmCat6x14 myDisp(1);
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
 
-#define WIFI_THROTTLE_TIME 1000 * 60 * 4
+#define MQTT_THROTTLE_TIME (1000 * 3600 * 12) // 12 hour delay
 
 bool codeFirstSend[3] = { 0, 0, 0 };
 unsigned long codeSentLast[3];
@@ -37,14 +37,9 @@ void setup()
 
     attachInterrupt(digitalPinToInterrupt(LED), ledChange, CHANGE);
 
-    codeSentLast[STATUS_OFF] = -WIFI_THROTTLE_TIME;
-    codeSentLast[STATUS_NORMAL] = -WIFI_THROTTLE_TIME;
-    codeSentLast[STATUS_ERROR] = -WIFI_THROTTLE_TIME;
-
-    /*unsigned long value = -1;
-    Serial.printf("value = %lu\n", value);
-    value = value - 1;
-    Serial.printf("value - 1 = %lu\n", value);*/
+    codeSentLast[STATUS_OFF] = -MQTT_THROTTLE_TIME;
+    codeSentLast[STATUS_NORMAL] = -MQTT_THROTTLE_TIME;
+    codeSentLast[STATUS_ERROR] = -MQTT_THROTTLE_TIME;
 }
 
 void loop()
@@ -54,6 +49,21 @@ void loop()
     delay(1); // let the ESP do its thing, otherwise it can interfere with the timings
 }
 
+void printConnectWaitStatus()
+{
+    const char* statusMessage[] = { "Off", "Normal", "Error" };
+    Serial.printf("MQTT throttle code: \"%s\", waiting ", statusMessage[systemStatus]);
+
+    unsigned long seconds = (MQTT_THROTTLE_TIME - (millis() - codeSentLast[systemStatus])) / 1000;
+    unsigned long minutes = seconds / 60;
+    unsigned long hours = minutes / 60;
+    minutes -= hours * 60;
+    seconds -= hours * 3600 + minutes * 60;
+    Serial.printf("%lu hours, %lu minutes, %lu seconds", hours, minutes, seconds);
+
+    Serial.printf(" to resend\n");
+}
+
 void sendStatus(int newStatus)
 {
     if (newStatus == systemStatus) // only transmit when status changes
@@ -61,11 +71,10 @@ void sendStatus(int newStatus)
 
     systemStatus = newStatus;
 
-    if (millis() - codeSentLast[newStatus] > WIFI_THROTTLE_TIME) { // send each status once per 10 minutes
-        //Serial.printf("Status: %d, now: %lu, SentLast %lu\n", newStatus, millis(), codeSentLast[newStatus]);
-    } else {
-        Serial.printf("Status: %d waiting %lu seconds to resend\n", newStatus,
-            (WIFI_THROTTLE_TIME / 1000) - (millis() - codeSentLast[newStatus]) / 1000);
+    if (millis() - codeSentLast[newStatus] < MQTT_THROTTLE_TIME) {
+        // we only want to send MQTT messages every so often
+        printConnectWaitStatus();
+        codeSentLast[newStatus] = millis();
         return;
     }
 
@@ -113,9 +122,6 @@ void sendStatus(int newStatus)
 
     Serial.println("Disconnecting from WiFi\n");
     disconnectWiFi();
-
-    codeSentLast[newStatus] = millis();
-    //codeFirstSend[newStatus] = 1;
 
     // reset flags in case WiFi interrupted a code read
     //ledOnDuration = 0;
