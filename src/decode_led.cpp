@@ -47,16 +47,31 @@ void printCode()
         myDisp.blink(0);
         myDisp.disp4Char(message, 0);
         myDisp.blink(3);
+        sendStatus(STATUS_ERROR);
     }
+}
+
+void printNormal()
+{
+    Serial.printf("System normal\n");
+    myDisp.blink(0);
+    myDisp.scrollText((char*)" OK ", 200);
+    sendStatus(STATUS_NORMAL);
+}
+
+void printOff()
+{
+    Serial.printf("System off\n");
+    myDisp.blink(0);
+    myDisp.scrollText((char*)" OFF", 200);
+    sendStatus(STATUS_OFF);
 }
 
 void decodeLED()
 {
     if (ledChanged) {
         if (ledStatus) { // measure the duration of low pulses
-            // code begin is low for 2250ms (repeat adds 250ms)
-            //if (around(ledOffDuration, 2250) || around(ledOffDuration, 2500)) {
-            if (ledOffDuration > 2200) {
+            if (ledOffDuration > 2200) { // code begin is low for 2250ms (repeat adds 250ms)
                 codeBegin();
             } else if (around(ledOffDuration, 1000)) { // pause between digits is low for 1000ms
                 nextDigit();
@@ -75,23 +90,20 @@ void decodeLED()
         static unsigned long lastPrint;
         if (millis() - lastPrint > 5000) { // print status every 5 seconds
             if (ledStatus) {
-                Serial.printf("System normal\n");
-                myDisp.blink(0);
-                myDisp.scrollText((char*)" OK ", 200);
-                sendStatus(STATUS_NORMAL);
+                printNormal();
             } else {
-                Serial.printf("System off\n");
-                myDisp.blink(0);
-                myDisp.scrollText((char*)" OFF", 200);
-                sendStatus(STATUS_OFF);
+                printOff();
             }
             lastPrint = millis();
         }
         ledLastChanged = millis();
+        //ledOnStart = ledLastChanged;
+        //ledOffStart = ledLastChanged;
         codeStart = 0;
         codePause = 0;
     }
 
+    // check for when a code is complete
     if ((millis() - ledLastChanged) > 300 && !ledStatus) {
         if (codeStart && codePause && !codeFail) {
             if (around(ledOnDuration, 1000) || around(ledOnDuration, 250)) {
