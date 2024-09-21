@@ -14,7 +14,6 @@ PubSubClient mqtt(espClient);
 
 #define MQTT_THROTTLE_TIME (1000 * 3600 * 12) // 12 hour delay
 
-bool codeFirstSend[3] = { 0, 0, 0 };
 unsigned long codeSentLast[3];
 
 void sendStatus(int);
