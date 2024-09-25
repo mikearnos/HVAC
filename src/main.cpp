@@ -28,7 +28,7 @@ void setup()
     myDisp.swirly(40);
     myDisp.clear();
 
-    pinMode(LED, INPUT);
+    pinMode(LED, INPUT_PULLUP);
     ledStatus = digitalRead(LED) ^ 1;
     ledChange(); // sets things up to detect system normal on startup
 
@@ -131,8 +131,4 @@ void sendStatus(int newStatus)
     disconnectWiFi();
 
     codeSentLast[newStatus] = millis();
-
-    // reset flags in case WiFi interrupted a code read
-    //ledOnDuration = 0;
-    //ledOffDuration = 0;
 }
