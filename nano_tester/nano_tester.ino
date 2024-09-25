@@ -19,6 +19,13 @@ void loop() {
 
   sendHigh(10000);                   // high for ten seconds "ON"
 
+  sendCode(34);
+  sendCode(34);
+  sendCode(34);
+  sendCode(47);
+  sendCode(47);
+  sendCode(47);
+
   sendLow(10000);                    // low for ten seconds "OFF"
 }
 
