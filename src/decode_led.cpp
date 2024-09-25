@@ -4,7 +4,7 @@
 #include <WarmCat_6x14Backpack.h>
 
 bool ledStatus, ledChanged = 0;
-bool codeStart = 0, codePause, codeFail;
+bool codeStart = 0, codePause, codeFail, stumble = 0;
 unsigned long ledOnStart = 0, ledOffStart = 0, ledOnDuration, ledOffDuration, ledLastChanged;
 int errorCode = 0, systemStatus = -1;
 
@@ -13,11 +13,12 @@ extern WarmCat6x14 myDisp;
 
 IRAM_ATTR void ledChange()
 {
+    ledLastChanged = millis();
+
     if (ledChanged)
-        return;
+        stumble = 1;
 
     ledChanged = 1;
-    ledLastChanged = millis();
 
     if (digitalRead(LED)) { // off to on
         ledStatus = 1;
@@ -69,9 +70,17 @@ void printOff()
 
 void decodeLED()
 {
+    if (stumble) {
+        Serial.printf("took a stumble!\n");
+        stumble = 0;
+        ledOffDuration = 0;
+        ledOnDuration = 0;
+        codeFail = 1; // we haven't procesed the last change yet
+    }
+
     if (ledChanged) {
         if (ledStatus) { // measure the duration of low pulses
-            if (ledOffDuration > 2200) { // code begin is low for 2250ms (repeat adds 250ms)
+            if (around(ledOffDuration, 2250) || around(ledOffDuration, 2500)) { // code begin is low for 2250ms (repeat adds 250ms)
                 codeBegin();
             } else if (around(ledOffDuration, 1000)) { // pause between digits is low for 1000ms
                 nextDigit();
@@ -86,7 +95,17 @@ void decodeLED()
         ledChanged = 0;
     }
 
-    if ((millis() - ledLastChanged) > 3500) { // if LED has not changed in 3.5 seconds
+    if ((millis() - ledLastChanged) > 300 && !ledStatus) {
+        // last low transition means end of code
+        if (around(ledOnDuration, 1000)) { // last pulse was long
+            if (codeStart && codePause && !codeFail) { // code was complete
+                printCode();
+                codeStart = 0;
+            }
+        }
+    }
+
+    if ((millis() - ledLastChanged) > 5000) { // if LED has not changed in 5 seconds
         static unsigned long lastPrint;
         if (millis() - lastPrint > 5000) { // print status every 5 seconds
             if (ledStatus) {
@@ -100,47 +119,34 @@ void decodeLED()
         //ledOnStart = ledLastChanged;
         //ledOffStart = ledLastChanged;
         codeStart = 0;
-        codePause = 0;
-    }
-
-    // check for when a code is complete
-    if ((millis() - ledLastChanged) > 300 && !ledStatus) {
-        if (codeStart && codePause && !codeFail) {
-            if (around(ledOnDuration, 1000) || around(ledOnDuration, 250)) {
-                printCode();
-                codeStart = 0;
-                codePause = 0;
-            }
-        }
+        //codePause = 0;
     }
 }
 
 void codeBegin()
 {
     // start reading new code
-    if (!codeStart) {
-        Serial.printf("↓%lu Reading code... ", ledOffDuration);
-        codeStart = 1;
-        codePause = 0;
-        codeFail = 0;
-    }
+    Serial.printf("↓%lu Reading code... ", ledOffDuration);
+    codeStart = 1;
+    codePause = 0;
+    codeFail = 0;
     errorCode = 0;
 }
 
 void nextDigit()
 {
-    if (codeStart && !codePause) { // check for only 1 pause
+    if (codeStart && !codePause && !codeFail) { // check for only 1 pause
         Serial.printf("↓%lu ", ledOffDuration);
-        codePause = 1;
     } else { // code hasn't started yet, or pause already happened
         codeFail = 1;
         Serial.printf("pause_err ");
     }
+    codePause = 1;
 }
 
 void pulseLong()
 {
-    if (codeStart && codePause) {
+    if (codeStart && codePause & !codeFail) {
         Serial.printf("↑%lu ", ledOnDuration);
         errorCode++;
     } else {
@@ -151,7 +157,7 @@ void pulseLong()
 
 void pulseShort()
 {
-    if (codeStart && !codePause) {
+    if (codeStart && !codePause && !codeFail) {
         Serial.printf("↑%lu ", ledOnDuration);
         errorCode += 10;
     } else {
