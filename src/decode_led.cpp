@@ -33,7 +33,7 @@ IRAM_ATTR void ledChange()
 
 bool around(unsigned long duration, int timing)
 {
-    unsigned int range = 50; // 50ms plus or minus
+    unsigned int range = 50; // 50ms plus or minus the input timing value
     if (duration >= (timing - range) && duration <= (timing + range))
         return 1;
     return 0;
@@ -80,7 +80,8 @@ void decodeLED()
 
     if (ledChanged) {
         if (ledStatus) { // measure the duration of low pulses
-            if (around(ledOffDuration, 2250) || around(ledOffDuration, 2500)) { // code begin is low for 2250ms (repeat adds 250ms)
+            if (around(ledOffDuration, 2250) || around(ledOffDuration, 2500)) {
+                // code begin is low for 2250ms (repeat adds 250ms)
                 codeBegin();
             } else if (around(ledOffDuration, 1000)) { // pause between digits is low for 1000ms
                 nextDigit();
@@ -116,10 +117,7 @@ void decodeLED()
             lastPrint = millis();
         }
         ledLastChanged = millis();
-        //ledOnStart = ledLastChanged;
-        //ledOffStart = ledLastChanged;
-        codeStart = 0;
-        //codePause = 0;
+        //codeStart = 0;
     }
 }
 
