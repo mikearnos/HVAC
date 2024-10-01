@@ -22,7 +22,7 @@ float connectWifi()
     delay(1);
 
     WiFi.persistent(false);
-    WiFi.setOutputPower(0.0); // 0 to 20.5 (dBm)
+    //WiFi.setOutputPower(0.0); // 0 to 20.5 (dBm)
 
     WiFi.mode(WIFI_STA); //This line hides the viewing of ESP as wifi network
 
